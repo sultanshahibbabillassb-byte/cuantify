@@ -920,10 +920,7 @@
 <!-- ── SUMMARY MODAL ── -->
 <div class="modal-overlay" id="summaryOverlay" onclick="handleSummaryOverlayClick(event)">
   <div class="summary-modal">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
-      <div class="summary-month-title" id="summaryMonthTitle">—</div>
-      <button onclick="openApiSettings()" title="Gemini API Key" style="background:transparent;border:1px solid var(--border2);border-radius:8px;padding:5px 10px;color:var(--text3);font-size:12px;cursor:pointer;transition:all 0.2s;white-space:nowrap;margin-left:10px;margin-top:4px" id="apiSettingsBtn">⚙ API Key</button>
-    </div>
+    <div class="summary-month-title" id="summaryMonthTitle">—</div>
     <div class="summary-subtitle" id="summarySubtitle">Monthly Financial Summary</div>
 
     <div class="summary-numbers" id="summaryNumbers"></div>
@@ -942,18 +939,6 @@
       <div id="summaryCatBreakdown"></div>
     </div>
 
-    <!-- AI ANALYSIS SECTION -->
-    <hr class="summary-divider">
-    <div class="summary-section" id="aiAnalysisSection">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div class="summary-section-title" style="margin-bottom:0">✦ Analisis AI</div>
-        <button id="generateAiBtn" onclick="generateAiAnalysis()" style="background:var(--accent-dim);border:1px solid #c8ff0030;border-radius:8px;padding:6px 14px;color:var(--accent);font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all 0.2s">Generate</button>
-      </div>
-      <div id="aiAnalysisOutput" style="font-size:13px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.6">
-        Tap "Generate" untuk dapat analisis dan rekomendasi dari AI.
-      </div>
-    </div>
-
     <div class="modal-actions" style="margin-top:20px">
       <button class="btn-secondary" onclick="closeSummaryModal()">Tutup</button>
       <button class="btn-submit" onclick="copySummary()" id="copyBtn">Salin Ringkasan</button>
@@ -961,26 +946,6 @@
   </div>
 </div>
 
-<!-- ── API KEY SETTINGS MODAL ── -->
-<div class="modal-overlay" id="apiSettingsOverlay" onclick="if(event.target===this)closeApiSettings()">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-title">⚙ Gemini API Key</div>
-    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">
-      API key disimpan hanya di browser lo — tidak dikirim ke mana pun selain Google Gemini.
-    </p>
-    <div class="form-group">
-      <label class="form-label">API Key</label>
-      <input type="password" class="form-input" id="apiKeyInput" placeholder="AIza...">
-    </div>
-    <div style="background:var(--accent-dim);border:1px solid #c8ff0030;border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text2);line-height:1.6">
-      Belum punya API key? Ikuti panduan di file <strong style="color:var(--accent)">panduan-gemini-key.html</strong> yang disertakan.
-    </div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeApiSettings()">Batal</button>
-      <button class="btn-submit" onclick="saveApiKey()">Simpan</button>
-    </div>
-  </div>
-</div>
 
 <!-- ── DATA TRANSFER MODAL ── -->
 <div class="modal-overlay" id="transferOverlay" onclick="if(event.target===this)closeTransfer()">
@@ -1718,173 +1683,12 @@ function handleSummaryOverlayClick(e) {
 }
 
 function copySummary() {
-  const aiText = document.getElementById('aiAnalysisOutput').innerText;
-  const hasAi = !aiText.includes('Tap "Generate"') && !aiText.includes('Generating');
-  const base = window._summaryText || '';
-  const full = hasAi ? base + '\n\n── ANALISIS AI ──\n' + aiText : base;
-  navigator.clipboard.writeText(full).then(() => {
+  navigator.clipboard.writeText(window._summaryText || '').then(() => {
     const btn = document.getElementById('copyBtn');
     btn.textContent = '✓ Tersalin!';
     btn.style.background = 'var(--income-dim)';
     setTimeout(() => { btn.textContent = 'Salin Ringkasan'; btn.style.background = ''; }, 2000);
   });
-}
-
-// ═══════════════════════════════════════════════
-// API KEY SETTINGS
-// ═══════════════════════════════════════════════
-
-function openApiSettings() {
-  const saved = localStorage.getItem('cuantify_gemini_key') || '';
-  document.getElementById('apiKeyInput').value = saved;
-  document.getElementById('apiSettingsOverlay').classList.add('open');
-}
-
-function closeApiSettings() {
-  document.getElementById('apiSettingsOverlay').classList.remove('open');
-}
-
-function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (key) {
-    localStorage.setItem('cuantify_gemini_key', key);
-    const btn = document.getElementById('apiSettingsBtn');
-    btn.style.borderColor = 'var(--income)';
-    btn.style.color = 'var(--income)';
-    btn.textContent = '⚙ API Key ✓';
-  } else {
-    localStorage.removeItem('cuantify_gemini_key');
-  }
-  closeApiSettings();
-}
-
-// ═══════════════════════════════════════════════
-// GEMINI AI ANALYSIS
-// ═══════════════════════════════════════════════
-
-async function generateAiAnalysis() {
-  const apiKey = localStorage.getItem('cuantify_gemini_key');
-  const output = document.getElementById('aiAnalysisOutput');
-  const btn = document.getElementById('generateAiBtn');
-
-  if (!apiKey) {
-    output.innerHTML = `<span style="color:var(--expense)">API key belum diset. Tap ⚙ API Key di atas untuk mengisi.</span>`;
-    return;
-  }
-
-  // Build structured context from current summary data
-  const p = prevPeriod(currentPeriod);
-  const { start, end } = periodDates(p);
-  const label = periodLabel(p);
-  const txs = transactions.filter(tx => { const d = new Date(tx.date); return d >= start && d <= end; });
-
-  if (txs.length === 0) {
-    output.innerHTML = `<span style="color:var(--text3)">Tidak ada transaksi di periode ini untuk dianalisis.</span>`;
-    return;
-  }
-
-  const income   = txs.filter(t=>t.type==='INCOME').reduce((s,t)=>s+t.amount, 0);
-  const expense  = txs.filter(t=>t.type==='EXPENSE').reduce((s,t)=>s+t.amount, 0);
-  const invest   = txs.filter(t=>t.type==='INVESTMENT').reduce((s,t)=>s+t.amount, 0);
-  const savingRate = income > 0 ? ((income-expense)/income*100).toFixed(1) : 0;
-
-  const catTotals = {};
-  txs.filter(t=>t.type==='EXPENSE').forEach(t => {
-    catTotals[t.mainCategory] = (catTotals[t.mainCategory]||0) + t.amount;
-  });
-  const subTotals = {};
-  txs.filter(t=>t.type==='EXPENSE').forEach(t => {
-    const key = `${t.mainCategory} > ${t.subCategory}`;
-    subTotals[key] = (subTotals[key]||0) + t.amount;
-  });
-
-  // Include notes if any
-  const notedTxs = txs.filter(t=>t.notes).map(t =>
-    `[${t.mainCategory}/${t.subCategory}] ${formatIDRFull(t.amount)} — "${t.notes}"`
-  );
-
-  const prompt = `Kamu adalah asisten keuangan personal yang komunikatif dan jujur. Analisis data keuangan berikut dan berikan insight yang actionable dalam Bahasa Indonesia yang santai (boleh pakai "lo/gue").
-
-PERIODE: ${label}
-
-RINGKASAN:
-- Total Income: ${formatIDRFull(income)}
-- Total Expense: ${formatIDRFull(expense)}
-- Investment/Tabungan: ${formatIDRFull(invest)}
-- Remaining Cashflow: ${formatIDRFull(income-expense)}
-- Saving Rate: ${savingRate}%
-- Jumlah transaksi: ${txs.length}
-
-BREAKDOWN EXPENSE PER KATEGORI:
-${Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`- ${k}: ${formatIDRFull(v)} (${income>0?(v/income*100).toFixed(1):0}% dari income)`).join('\n')}
-
-DETAIL SUBKATEGORI EXPENSE:
-${Object.entries(subTotals).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>`- ${k}: ${formatIDRFull(v)}`).join('\n')}
-
-${notedTxs.length > 0 ? `CATATAN TRANSAKSI:\n${notedTxs.join('\n')}` : ''}
-
-Berikan:
-1. **Evaluasi singkat** kondisi keuangan periode ini (2-3 kalimat jujur)
-2. **Top 2-3 insight** paling penting dari data ini (pola pengeluaran, anomali, hal yang perlu diperhatikan)
-3. **2-3 rekomendasi konkret** untuk periode berikutnya yang spesifik dan realistis
-4. **Satu kalimat penutup** yang memotivasi
-
-Format pakai markdown ringan (bold untuk poin penting). Jangan terlalu panjang — to the point saja.`;
-
-  // Show loading state
-  btn.textContent = 'Generating...';
-  btn.style.opacity = '0.6';
-  btn.style.pointerEvents = 'none';
-  output.innerHTML = `<span style="color:var(--text3)">✦ AI sedang menganalisis data lo...</span>`;
-
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
-        })
-      }
-    );
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err?.error?.message || `HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    if (!text) throw new Error('Respons kosong dari AI');
-
-    // Render markdown-ish formatting
-    const rendered = text
-      .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text)">$1</strong>')
-      .replace(/^#{1,3}\s+(.+)$/gm, '<strong style="color:var(--accent)">$1</strong>')
-      .replace(/\n/g, '<br>');
-
-    output.style.color = 'var(--text2)';
-    output.style.fontFamily = "'DM Sans', sans-serif";
-    output.innerHTML = rendered;
-
-  } catch (err) {
-    let msg = err.message || 'Unknown error';
-    if (msg.includes('API_KEY_INVALID') || msg.includes('400')) {
-      msg = 'API key tidak valid. Cek kembali di ⚙ API Key.';
-    } else if (msg.includes('429')) {
-      msg = 'Rate limit tercapai. Coba lagi dalam 1 menit.';
-    } else if (msg.includes('Failed to fetch')) {
-      msg = 'Tidak bisa konek ke Gemini. Cek koneksi internet lo.';
-    }
-    output.innerHTML = `<span style="color:var(--expense)">⚠ ${msg}</span>`;
-  } finally {
-    btn.textContent = 'Generate';
-    btn.style.opacity = '1';
-    btn.style.pointerEvents = 'all';
-  }
 }
 
 // ═══════════════════════════════════════════════
