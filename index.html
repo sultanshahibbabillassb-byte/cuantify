@@ -1037,8 +1037,61 @@ const CAT_COLORS = {
 let transactions = JSON.parse(localStorage.getItem('cuantify_txs') || '[]');
 let currentType = 'INCOME';
 let currentFilter = 'all';
-let currentDate = new Date();
 let chartBar, chartDoughnut;
+
+// ═══════════════════════════════════════════════
+// PERIOD LOGIC — siklus tanggal 25
+// Periode = 25 bulan X s/d 24 bulan X+1
+// currentPeriod = { startYear, startMonth (0-based) }
+// ═══════════════════════════════════════════════
+
+const PAYDAY = 25; // tanggal gajian
+
+function todayPeriod() {
+  // Tentukan periode aktif berdasarkan tanggal hari ini
+  const now = new Date();
+  const d = now.getDate();
+  const m = now.getMonth();   // 0-based
+  const y = now.getFullYear();
+  // Kalau hari ini < 25, masih di periode bulan sebelumnya (mulai 25 bulan lalu)
+  if (d < PAYDAY) {
+    const startMonth = m === 0 ? 11 : m - 1;
+    const startYear  = m === 0 ? y - 1 : y;
+    return { startYear, startMonth };
+  }
+  // Kalau hari ini >= 25, periode baru dimulai hari ini
+  return { startYear: y, startMonth: m };
+}
+
+let currentPeriod = todayPeriod();
+
+function periodDates(p) {
+  // Kembalikan { start: Date, end: Date } untuk periode p
+  const start = new Date(p.startYear, p.startMonth, PAYDAY);
+  const endMonth = p.startMonth === 11 ? 0  : p.startMonth + 1;
+  const endYear  = p.startMonth === 11 ? p.startYear + 1 : p.startYear;
+  const end = new Date(endYear, endMonth, PAYDAY - 1); // tanggal 24
+  return { start, end };
+}
+
+function periodLabel(p) {
+  const { start, end } = periodDates(p);
+  const startStr = start.toLocaleString('id-ID', { month: 'long' });
+  const endStr   = end.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  return `${startStr}–${endStr}`;
+}
+
+function prevPeriod(p) {
+  const m = p.startMonth === 0 ? 11 : p.startMonth - 1;
+  const y = p.startMonth === 0 ? p.startYear - 1 : p.startYear;
+  return { startYear: y, startMonth: m };
+}
+
+function nextPeriod(p) {
+  const m = p.startMonth === 11 ? 0 : p.startMonth + 1;
+  const y = p.startMonth === 11 ? p.startYear + 1 : p.startYear;
+  return { startYear: y, startMonth: m };
+}
 
 // ═══════════════════════════════════════════════
 // AMOUNT FORMATTER
@@ -1082,14 +1135,14 @@ function switchViewMobile(name, btn) {
 }
 
 function changeMonth(dir) {
-  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1);
+  currentPeriod = dir === -1 ? prevPeriod(currentPeriod) : nextPeriod(currentPeriod);
   updateMonthLabel();
   renderDashboard();
   renderTransactions();
 }
 
 function updateMonthLabel() {
-  document.getElementById('monthLabel').textContent = currentDate.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  document.getElementById('monthLabel').textContent = periodLabel(currentPeriod);
 }
 
 // ═══════════════════════════════════════════════
@@ -1181,15 +1234,14 @@ function addTransaction() {
 }
 
 // ═══════════════════════════════════════════════
-// FILTER: get transactions for current month
+// FILTER: get transactions for current period (25 → 24)
 // ═══════════════════════════════════════════════
 
 function getMonthTxs() {
-  const y = currentDate.getFullYear();
-  const m = currentDate.getMonth();
+  const { start, end } = periodDates(currentPeriod);
   return transactions.filter(tx => {
     const d = new Date(tx.date);
-    return d.getFullYear() === y && d.getMonth() === m;
+    return d >= start && d <= end;
   });
 }
 
@@ -1336,7 +1388,7 @@ function renderDashboard() {
   if (txs.length === 0) {
     aiText.textContent = 'Tambahkan transaksi untuk mendapatkan analisis otomatis dari AI.';
   } else {
-    aiText.innerHTML = generateAIText(income, expense, invest, cashflow, savingRate, catTotals, txs.length);
+    aiText.innerHTML = generateAIText(income, expense, invest, cashflow, savingRate, catTotals, txs.length, periodLabel(currentPeriod));
   }
 }
 
@@ -1389,11 +1441,9 @@ function generateInsights(txs, income, expense, invest, savingRate) {
 // AI NARRATIVE (rule-based, no API)
 // ═══════════════════════════════════════════════
 
-function generateAIText(income, expense, invest, cashflow, savingRate, catTotals, txCount) {
-  const monthName = currentDate.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+function generateAIText(income, expense, invest, cashflow, savingRate, catTotals, txCount, label) {
   const topExpCat = Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0];
-
-  let text = `Bulan <strong>${monthName}</strong>, lo tercatat <strong>${txCount} transaksi</strong>. `;
+  let text = `Periode <strong>${label}</strong>, lo tercatat <strong>${txCount} transaksi</strong>. `;
 
   if (income > 0) {
     text += `Total income <strong>${formatIDRFull(income)}</strong> dengan pengeluaran <strong>${formatIDRFull(expense)}</strong>. `;
@@ -1402,7 +1452,7 @@ function generateAIText(income, expense, invest, cashflow, savingRate, catTotals
     } else if (parseFloat(savingRate) >= 0) {
       text += `Saving rate <strong style="color:var(--accent)">${savingRate}%</strong> — masih di bawah target 20%, perlu diperhatikan. `;
     } else {
-      text += `<strong style="color:var(--expense)">Cashflow negatif</strong> — pengeluaran melebihi income bulan ini. `;
+      text += `<strong style="color:var(--expense)">Cashflow negatif</strong> — pengeluaran melebihi income periode ini. `;
     }
   }
 
@@ -1412,7 +1462,7 @@ function generateAIText(income, expense, invest, cashflow, savingRate, catTotals
   }
 
   if (invest > 0) {
-    text += `Lo juga invest <strong style="color:var(--invest)">${formatIDRFull(invest)}</strong> bulan ini.`;
+    text += `Lo juga nabung/invest <strong style="color:var(--invest)">${formatIDRFull(invest)}</strong> periode ini.`;
   }
 
   return text;
@@ -1472,20 +1522,18 @@ function deleteTx(id) {
 // ═══════════════════════════════════════════════
 
 function openSummaryModal() {
-  // Always summarize the PREVIOUS month relative to currently viewed month
-  const prevDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-  const y = prevDate.getFullYear();
-  const m = prevDate.getMonth();
+  // Summarize the PREVIOUS period relative to currently viewed period
+  const p = prevPeriod(currentPeriod);
+  const { start, end } = periodDates(p);
+  const label = periodLabel(p);
 
   const txs = transactions.filter(tx => {
     const d = new Date(tx.date);
-    return d.getFullYear() === y && d.getMonth() === m;
+    return d >= start && d <= end;
   });
-
-  const monthName = prevDate.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
-  document.getElementById('summaryMonthTitle').textContent = monthName;
+  document.getElementById('summaryMonthTitle').textContent = label;
   document.getElementById('summarySubtitle').textContent =
-    txs.length === 0 ? 'Tidak ada transaksi bulan ini' : `${txs.length} transaksi tercatat`;
+    txs.length === 0 ? 'Tidak ada transaksi periode ini' : `${txs.length} transaksi tercatat`;
 
   const income   = txs.filter(t=>t.type==='INCOME').reduce((s,t)=>s+t.amount, 0);
   const expense  = txs.filter(t=>t.type==='EXPENSE').reduce((s,t)=>s+t.amount, 0);
@@ -1521,9 +1569,9 @@ function openSummaryModal() {
 
   let narrative = '';
   if (txs.length === 0) {
-    narrative = 'Tidak ada transaksi yang tercatat di bulan ini.';
+    narrative = 'Tidak ada transaksi yang tercatat di periode ini.';
   } else {
-    narrative += `Bulan <strong>${monthName}</strong> lo mencatat total <strong>${txs.length} transaksi</strong>. `;
+    narrative += `Periode <strong>${label}</strong>, lo mencatat total <strong>${txs.length} transaksi</strong>. `;
     if (income > 0) {
       narrative += `Pemasukan sebesar <strong style="color:var(--income)">${formatIDRFull(income)}</strong> dengan total pengeluaran <strong style="color:var(--expense)">${formatIDRFull(expense)}</strong>. `;
       if (parseFloat(savingRate) >= 20) {
@@ -1561,7 +1609,7 @@ function openSummaryModal() {
         </div>`).join('');
 
   // Store summary text for copy
-  window._summaryText = buildPlainSummary(monthName, txs.length, income, expense, invest, savingRate, cashflow, sorted);
+  window._summaryText = buildPlainSummary(label, txs.length, income, expense, invest, savingRate, cashflow, sorted);
 
   document.getElementById('summaryOverlay').classList.add('open');
 }
