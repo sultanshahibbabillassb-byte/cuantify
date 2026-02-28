@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Cuantify</title>
 
 <!-- PWA: iOS Home Screen -->
@@ -67,6 +67,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 20px 32px;
+    padding-top: calc(20px + env(safe-area-inset-top));
     border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
@@ -444,7 +445,7 @@
     padding: 12px 14px;
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
+    font-size: 16px; /* min 16px — prevents iOS auto-zoom on focus */
     outline: none;
     transition: border-color 0.2s;
     appearance: none;
