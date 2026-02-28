@@ -641,17 +641,135 @@
   }
   .btn-summary:hover { background: #c8ff0025; border-color: var(--accent); }
 
+  canvas { max-height: 220px; }
+
+  /* ── BOTTOM NAV (mobile only) ── */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #0e0e18ee;
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border2);
+    z-index: 200;
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  }
+  .bottom-nav-inner { display: flex; justify-content: space-around; align-items: center; }
+  .bnav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: transparent; border: none; color: var(--text3);
+    font-family: 'DM Sans', sans-serif; font-size: 10px; cursor: pointer;
+    padding: 6px 4px; border-radius: 10px; transition: color 0.2s;
+  }
+  .bnav-btn.active { color: var(--accent); }
+  .bnav-icon { font-size: 20px; line-height: 1; }
+
+  /* ── FAB ── */
+  .fab {
+    display: none; position: fixed;
+    bottom: max(72px, calc(60px + env(safe-area-inset-bottom))); right: 20px;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--accent); color: #0a0a0f; font-size: 26px;
+    border: none; cursor: pointer; z-index: 199;
+    box-shadow: 0 4px 24px #c8ff0040; transition: transform 0.15s;
+    align-items: center; justify-content: center;
+  }
+  .fab:active { transform: scale(0.92); }
+
+  /* ── TABLET & BELOW ── */
   @media (max-width: 900px) {
-    .snapshot-grid { grid-template-columns: repeat(2, 1fr); }
+    .snapshot-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .charts-grid { grid-template-columns: 1fr; }
-    .tx-table-header, .tx-row { grid-template-columns: 100px 1fr 100px 80px; }
-    .tx-table-header span:nth-child(5),
-    .tx-table-header span:nth-child(6),
-    .tx-row > *:nth-child(5),
-    .tx-row > *:nth-child(6) { display: none; }
+    canvas { max-height: 180px; }
     .main { padding: 16px; }
     .topbar { padding: 14px 16px; }
     .btn-summary span { display: none; }
+    .tx-table-header, .tx-row { grid-template-columns: 100px 1fr 100px 80px; }
+    .tx-table-header span:nth-child(5), .tx-table-header span:nth-child(6),
+    .tx-row > *:nth-child(5), .tx-row > *:nth-child(6) { display: none; }
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    /* Topbar: hide desktop nav, show only logo + month + reset */
+    .nav-tabs { display: none; }
+    .btn-summary { display: none; }
+    .topbar { padding: 12px 16px; gap: 8px; }
+    .month-selector span { font-size: 12px; }
+
+    /* Main padding — extra bottom for bottom nav */
+    .main { padding: 14px 14px 88px; }
+
+    /* Snapshot 2-col */
+    .snapshot-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .snap-card { padding: 14px; }
+    .snap-value { font-size: 17px; letter-spacing: -0.5px; }
+    .snap-label { font-size: 9px; }
+    .snap-sub { font-size: 10px; }
+
+    /* Charts stack */
+    .charts-grid { grid-template-columns: 1fr; gap: 12px; }
+    .chart-card { padding: 16px; }
+
+    /* Insights stack */
+    .insights-row { grid-template-columns: 1fr; gap: 8px; }
+
+    /* AI card */
+    .ai-card { padding: 16px; }
+    .ai-text { font-size: 13px; }
+
+    /* Transaction table → card style */
+    .tx-table-header { display: none; }
+    .tx-header .btn-primary { display: none; }
+    .section-title { font-size: 18px; }
+    .tx-row {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 14px 16px; position: relative;
+    }
+    .tx-row .type-badge { align-self: flex-start; margin-bottom: 2px; }
+    .tx-cat-main { font-size: 14px; font-weight: 600; }
+    .tx-cat-sub { font-size: 12px; }
+    .tx-amount { font-size: 16px !important; text-align: left !important; font-weight: 700; }
+    .tx-notes { font-size: 12px; color: var(--text3); }
+    .tx-date { font-size: 11px; }
+    .del-btn { position: absolute; top: 14px; right: 14px; }
+
+    /* Modal slides up from bottom */
+    .modal-overlay { align-items: flex-end; }
+    .modal {
+      width: 100%; max-width: 100%;
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px max(28px, env(safe-area-inset-bottom));
+      transform: translateY(30px);
+      max-height: 92vh; overflow-y: auto;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .summary-modal {
+      width: 100%; max-width: 100%;
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px max(28px, env(safe-area-inset-bottom));
+      transform: translateY(30px);
+    }
+    .modal-overlay.open .summary-modal { transform: translateY(0); }
+
+    /* Form — single column on mobile */
+    .form-row { grid-template-columns: 1fr; gap: 0; }
+    .modal-title { font-size: 18px; }
+
+    /* Summary numbers 2-col */
+    .summary-numbers { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .sum-num-val { font-size: 15px; }
+
+    /* Show bottom nav + FAB */
+    .bottom-nav { display: block; }
+    .fab { display: flex; }
+  }
+
+  /* ── SMALL PHONES ── */
+  @media (max-width: 360px) {
+    .snap-value { font-size: 14px; }
+    .topbar { gap: 6px; }
+    .month-selector span { max-width: 72px; font-size: 11px; }
   }
 </style>
 </head>
@@ -768,6 +886,24 @@
 
   </div>
 </div>
+
+<!-- ── BOTTOM NAV (mobile) ── -->
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bnav-btn active" id="bnav-dashboard" onclick="switchViewMobile('dashboard', this)">
+      <span class="bnav-icon">◈</span>Dashboard
+    </button>
+    <button class="bnav-btn" id="bnav-transactions" onclick="switchViewMobile('transactions', this)">
+      <span class="bnav-icon">≡</span>Transaksi
+    </button>
+    <button class="bnav-btn" id="bnav-summary" onclick="openSummaryModal()">
+      <span class="bnav-icon">✦</span>Summary
+    </button>
+  </div>
+</div>
+
+<!-- ── FAB (mobile add button) ── -->
+<button class="fab" onclick="openModal()">＋</button>
 
 <!-- ── SUMMARY MODAL ── -->
 <div class="modal-overlay" id="summaryOverlay" onclick="handleSummaryOverlayClick(event)">
@@ -932,6 +1068,15 @@ function switchView(name) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById(`view-${name}`).classList.add('active');
   event.target.classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'transactions') renderTransactions();
+}
+
+function switchViewMobile(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`view-${name}`).classList.add('active');
+  btn.classList.add('active');
   if (name === 'dashboard') renderDashboard();
   if (name === 'transactions') renderTransactions();
 }
