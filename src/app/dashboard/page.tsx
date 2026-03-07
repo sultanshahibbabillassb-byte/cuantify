@@ -47,14 +47,13 @@ function getPeriod(payDay: number, offset = 0) {
 }
 
 function formatDate(d: Date) {
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function formatDateInput(d: Date) {
   return d.toISOString().split('T')[0]
 }
 
-// Simple bar chart
 function BarChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const max = Math.max(...data.map(d => d.value), 1)
   return (
@@ -85,7 +84,6 @@ function BarChart({ data }: { data: { label: string; value: number; color: strin
   )
 }
 
-// Simple donut chart
 function DonutChart({ income, expense, invest }: { income: number; expense: number; invest: number }) {
   const total = income + expense + invest || 1
   const iP = (income / total) * 100
@@ -100,7 +98,7 @@ function DonutChart({ income, expense, invest }: { income: number; expense: numb
   ]
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-      <svg width="120" height="120" viewBox="0 0 120 120">
+      <svg width="100" height="100" viewBox="0 0 120 120">
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={COLORS.surface2} strokeWidth="18" />
         {segments.map((s, i) => {
           const dashArray = `${(s.pct / 100) * circumference} ${circumference}`
@@ -122,17 +120,17 @@ function DonutChart({ income, expense, invest }: { income: number; expense: numb
           cashflow
         </text>
       </svg>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {[
           { label: 'Income', value: income, color: COLORS.income },
           { label: 'Expense', value: expense, color: COLORS.expense },
           { label: 'Invest', value: invest, color: COLORS.invest },
         ].map((s, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: s.color, flexShrink: 0 }} />
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ width: '7px', height: '7px', borderRadius: '2px', background: s.color, flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: '10px', color: COLORS.text3, fontFamily: 'JetBrains Mono' }}>{s.label}</div>
-              <div style={{ fontSize: '12px', color: COLORS.text, fontWeight: '600', fontFamily: 'Space Grotesk' }}>
+              <div style={{ fontSize: '9px', color: COLORS.text3, fontFamily: 'JetBrains Mono' }}>{s.label}</div>
+              <div style={{ fontSize: '11px', color: COLORS.text, fontWeight: '600', fontFamily: 'Space Grotesk' }}>
                 {formatRp(s.value)}
               </div>
             </div>
@@ -167,7 +165,6 @@ export default function DashboardPage() {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { window.location.href = '/'; return }
       setUser(data.user)
-      // Cek apakah user baru (created dalam 1 menit terakhir)
       const createdAt = new Date(data.user.created_at)
       const now = new Date()
       const diffMinutes = (now.getTime() - createdAt.getTime()) / 60000
@@ -223,14 +220,12 @@ export default function DashboardPage() {
     window.location.href = '/'
   }
 
-  // Calculations
   const income = transactions.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.amount, 0)
   const expense = transactions.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.amount, 0)
   const invest = transactions.filter(t => t.type === 'INVESTMENT').reduce((s, t) => s + t.amount, 0)
   const cashflow = income - expense
   const savingRate = income > 0 ? ((income - expense) / income * 100) : 0
 
-  // Bar chart data
   const expenseByCategory: Record<string, number> = {}
   transactions.filter(t => t.type === 'EXPENSE').forEach(t => {
     expenseByCategory[t.main_category] = (expenseByCategory[t.main_category] || 0) + t.amount
@@ -250,6 +245,8 @@ export default function DashboardPage() {
   }
   const labelStyle = { fontSize: '12px', color: COLORS.text2, marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }
 
+  const periodLabel = `${formatDate(period.start)} — ${formatDate(period.end)}`
+
   return (
     <div style={{ minHeight: '100vh', background: COLORS.bg, color: COLORS.text, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
       <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -259,107 +256,119 @@ export default function DashboardPage() {
         position: 'sticky', top: 0, zIndex: 100,
         background: COLORS.bg + 'ee', backdropFilter: 'blur(12px)',
         borderBottom: `1px solid ${COLORS.border}`,
-        padding: '0 20px', height: '56px',
+        padding: '0 16px', height: '52px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
       }}>
-        <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '20px', fontWeight: '700' }}>
+        <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '18px', fontWeight: '700', flexShrink: 0 }}>
           Cuan<span style={{ color: COLORS.accent }}>tify</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ fontSize: '12px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+          <div style={{
+            fontSize: '11px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px'
+          }}>
             {user?.email?.split('@')[0]}
           </div>
           <button onClick={handleLogout} style={{
             background: 'transparent', border: `1px solid ${COLORS.border2}`,
-            color: COLORS.text3, padding: '5px 12px', borderRadius: '6px',
-            fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit'
+            color: COLORS.text3, padding: '4px 10px', borderRadius: '6px',
+            fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0
           }}>Logout</button>
         </div>
       </div>
 
-      {/* PERIOD BAR */}
+      {/* NAV + PERIOD BAR */}
       <div style={{
-        padding: '12px 20px', borderBottom: `1px solid ${COLORS.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        padding: '10px 16px', borderBottom: `1px solid ${COLORS.border}`,
+        display: 'flex', flexDirection: 'column', gap: '10px'
       }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {(['dashboard', 'transaksi'] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              padding: '6px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '600',
-              cursor: 'pointer', fontFamily: 'inherit', border: 'none',
-              background: activeTab === tab ? COLORS.accent : COLORS.surface2,
-              color: activeTab === tab ? '#0a0a0f' : COLORS.text2,
-            }}>{tab.charAt(0).toUpperCase() + tab.slice(1)}</button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button onClick={() => setPeriodOffset(p => p - 1)} style={{
-            background: COLORS.surface2, border: `1px solid ${COLORS.border2}`,
-            color: COLORS.text, width: '28px', height: '28px', borderRadius: '6px',
-            cursor: 'pointer', fontSize: '14px'
-          }}>‹</button>
-          <div style={{ fontSize: '12px', color: COLORS.text2, fontFamily: 'JetBrains Mono, monospace', minWidth: '160px', textAlign: 'center' }}>
-            {formatDate(period.start).split(' ').slice(1).join(' ')} — {formatDate(period.end).split(' ').slice(1).join(' ')}
+        {/* Tab + Period dalam 1 baris */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+            {(['dashboard', 'transaksi'] as const).map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
+                cursor: 'pointer', fontFamily: 'inherit', border: 'none',
+                background: activeTab === tab ? COLORS.accent : COLORS.surface2,
+                color: activeTab === tab ? '#0a0a0f' : COLORS.text2,
+              }}>{tab.charAt(0).toUpperCase() + tab.slice(1)}</button>
+            ))}
           </div>
-          <button onClick={() => setPeriodOffset(p => p + 1)} disabled={periodOffset >= 0} style={{
-            background: COLORS.surface2, border: `1px solid ${COLORS.border2}`,
-            color: periodOffset >= 0 ? COLORS.text3 : COLORS.text,
-            width: '28px', height: '28px', borderRadius: '6px',
-            cursor: periodOffset >= 0 ? 'not-allowed' : 'pointer', fontSize: '14px'
-          }}>›</button>
+          {/* Period navigator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button onClick={() => setPeriodOffset(p => p - 1)} style={{
+              background: COLORS.surface2, border: `1px solid ${COLORS.border2}`,
+              color: COLORS.text, width: '26px', height: '26px', borderRadius: '6px',
+              cursor: 'pointer', fontSize: '14px', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>‹</button>
+            <div style={{
+              fontSize: '11px', color: COLORS.text2, fontFamily: 'JetBrains Mono, monospace',
+              textAlign: 'center', whiteSpace: 'nowrap'
+            }}>
+              {periodLabel}
+            </div>
+            <button onClick={() => setPeriodOffset(p => p + 1)} disabled={periodOffset >= 0} style={{
+              background: COLORS.surface2, border: `1px solid ${COLORS.border2}`,
+              color: periodOffset >= 0 ? COLORS.text3 : COLORS.text,
+              width: '26px', height: '26px', borderRadius: '6px',
+              cursor: periodOffset >= 0 ? 'not-allowed' : 'pointer', fontSize: '14px', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>›</button>
+          </div>
         </div>
       </div>
 
-      <div style={{ padding: '16px 20px', maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ padding: '12px 16px', maxWidth: '900px', margin: '0 auto', paddingBottom: '80px' }}>
 
-        {/* DASHBOARD TAB */}
         {activeTab === 'dashboard' && (
           <div>
-            {/* SUMMARY CARDS */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+            {/* SUMMARY CARDS — 2 kolom di mobile */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '12px' }}>
               {[
-                { label: 'TOTAL INCOME', value: income, color: COLORS.income, sub: `${transactions.filter(t => t.type === 'INCOME').length} transaksi` },
-                { label: 'TOTAL EXPENSE', value: expense, color: COLORS.expense, sub: `${transactions.filter(t => t.type === 'EXPENSE').length} transaksi` },
-                { label: 'INVESTMENT', value: invest, color: COLORS.invest, sub: `${transactions.filter(t => t.type === 'INVESTMENT').length} transaksi` },
+                { label: 'INCOME', value: income, color: COLORS.income, sub: `${transactions.filter(t => t.type === 'INCOME').length} transaksi` },
+                { label: 'EXPENSE', value: expense, color: COLORS.expense, sub: `${transactions.filter(t => t.type === 'EXPENSE').length} transaksi` },
+                { label: 'INVEST', value: invest, color: COLORS.invest, sub: `${transactions.filter(t => t.type === 'INVESTMENT').length} transaksi` },
                 { label: 'CASHFLOW', value: cashflow, color: cashflow >= 0 ? COLORS.income : COLORS.expense, sub: 'income - expense' },
                 { label: 'SAVING RATE', value: null, color: savingRate >= 20 ? COLORS.income : COLORS.expense, sub: 'target > 20%', rate: savingRate },
               ].map((card, i) => (
                 <div key={i} style={{
                   background: COLORS.surface, border: `1px solid ${COLORS.border}`,
-                  borderRadius: '12px', padding: '14px',
-                  borderTop: `2px solid ${card.color}40`
+                  borderRadius: '10px', padding: '12px',
+                  borderTop: `2px solid ${card.color}40`,
+                  gridColumn: i === 4 ? 'span 2' : 'span 1'
                 }}>
-                  <div style={{ fontSize: '9px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '8px', letterSpacing: '1px' }}>
+                  <div style={{ fontSize: '8px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '6px', letterSpacing: '1px' }}>
                     {card.label}
                   </div>
-                  <div style={{ fontSize: '18px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: card.color, marginBottom: '4px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: card.color, marginBottom: '2px' }}>
                     {card.rate !== undefined ? `${card.rate.toFixed(1)}%` : formatRp(card.value!)}
                   </div>
-                  <div style={{ fontSize: '11px', color: COLORS.text3 }}>{card.sub}</div>
+                  <div style={{ fontSize: '10px', color: COLORS.text3 }}>{card.sub}</div>
                 </div>
               ))}
             </div>
 
-            {/* CHARTS */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-              <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '12px', padding: '16px' }}>
-                <div style={{ fontSize: '10px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '8px', letterSpacing: '1px' }}>EXPENSE PER KATEGORI</div>
+            {/* CHARTS — stack vertikal di mobile */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+              <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '14px' }}>
+                <div style={{ fontSize: '9px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '8px', letterSpacing: '1px' }}>EXPENSE PER KATEGORI</div>
                 {barData.length > 0 ? <BarChart data={barData} /> : (
-                  <div style={{ height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.text3, fontSize: '13px' }}>
+                  <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.text3, fontSize: '13px' }}>
                     Belum ada expense
                   </div>
                 )}
               </div>
-              <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '12px', padding: '16px' }}>
-                <div style={{ fontSize: '10px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '8px', letterSpacing: '1px' }}>DISTRIBUSI</div>
+              <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '14px' }}>
+                <div style={{ fontSize: '9px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '8px', letterSpacing: '1px' }}>DISTRIBUSI</div>
                 <DonutChart income={income} expense={expense} invest={invest} />
               </div>
             </div>
 
             {/* RECENT TRANSACTIONS */}
-            <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '12px', padding: '16px' }}>
+            <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ fontSize: '10px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '1px' }}>TRANSAKSI TERBARU</div>
+                <div style={{ fontSize: '9px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '1px' }}>TRANSAKSI TERBARU</div>
                 <button onClick={() => setActiveTab('transaksi')} style={{
                   background: 'transparent', border: 'none', color: COLORS.accent,
                   fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit'
@@ -370,25 +379,26 @@ export default function DashboardPage() {
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '10px 0', borderBottom: `1px solid ${COLORS.border}`
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                     <div style={{
-                      width: '8px', height: '8px', borderRadius: '50%',
+                      width: '7px', height: '7px', borderRadius: '50%',
                       background: typeColor[tx.type], flexShrink: 0
                     }} />
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: '600' }}>{tx.main_category}</div>
-                      <div style={{ fontSize: '11px', color: COLORS.text3 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.main_category}</div>
+                      <div style={{ fontSize: '10px', color: COLORS.text3 }}>
                         {tx.sub_category && `${tx.sub_category} · `}{tx.date}
                       </div>
                     </div>
                   </div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: typeColor[tx.type] }}>
+                  <div style={{ fontSize: '13px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: typeColor[tx.type], flexShrink: 0, marginLeft: '8px' }}>
                     {tx.type === 'INCOME' ? '+' : '-'}{formatRp(tx.amount)}
                   </div>
                 </div>
               ))}
               {transactions.length === 0 && !loading && (
                 <div style={{ textAlign: 'center', padding: '24px', color: COLORS.text3, fontSize: '13px' }}>
+                  <div style={{ fontSize: '28px', marginBottom: '8px' }}>💸</div>
                   Belum ada transaksi di periode ini
                 </div>
               )}
@@ -396,37 +406,37 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* TRANSAKSI TAB */}
         {activeTab === 'transaksi' && (
           <div>
             {transactions.map(tx => (
               <div key={tx.id} style={{
                 background: COLORS.surface, border: `1px solid ${COLORS.border}`,
-                borderRadius: '12px', padding: '14px', marginBottom: '8px',
+                borderRadius: '10px', padding: '12px', marginBottom: '8px',
                 borderLeft: `3px solid ${typeColor[tx.type]}`
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
                       <span style={{
-                        fontSize: '10px', fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: '9px', fontFamily: 'JetBrains Mono, monospace',
                         background: typeColor[tx.type] + '22', color: typeColor[tx.type],
-                        padding: '2px 6px', borderRadius: '4px', border: `1px solid ${typeColor[tx.type]}40`
+                        padding: '2px 6px', borderRadius: '4px', border: `1px solid ${typeColor[tx.type]}40`,
+                        flexShrink: 0
                       }}>{typeLabel[tx.type]}</span>
                       <span style={{ fontSize: '13px', fontWeight: '600' }}>{tx.main_category}</span>
                     </div>
-                    {tx.sub_category && <div style={{ fontSize: '11px', color: COLORS.text3, marginBottom: '4px' }}>📂 {tx.sub_category}</div>}
+                    {tx.sub_category && <div style={{ fontSize: '11px', color: COLORS.text3, marginBottom: '2px' }}>📂 {tx.sub_category}</div>}
                     {tx.notes && (
                       <div style={{
-                        fontSize: '12px', color: COLORS.text2, background: COLORS.surface2,
+                        fontSize: '11px', color: COLORS.text2, background: COLORS.surface2,
                         padding: '4px 8px', borderRadius: '6px', marginBottom: '4px',
                         borderLeft: `2px solid ${COLORS.border2}`
                       }}>📝 {tx.notes}</div>
                     )}
-                    <div style={{ fontSize: '11px', color: COLORS.text3 }}>📅 {tx.date}</div>
+                    <div style={{ fontSize: '10px', color: COLORS.text3 }}>📅 {tx.date}</div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                    <div style={{ fontSize: '16px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: typeColor[tx.type] }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', marginLeft: '8px', flexShrink: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: typeColor[tx.type] }}>
                       {tx.type === 'INCOME' ? '+' : '-'}{formatRp(tx.amount)}
                     </div>
                     <button onClick={() => handleDelete(tx.id)} style={{
@@ -450,15 +460,16 @@ export default function DashboardPage() {
 
       {/* FAB */}
       <button onClick={() => setShowModal(true)} style={{
-        position: 'fixed', bottom: '24px', right: '24px',
+        position: 'fixed', bottom: '20px', right: '20px',
         width: '52px', height: '52px', borderRadius: '50%',
         background: COLORS.accent, border: 'none',
         fontSize: '24px', cursor: 'pointer',
         boxShadow: `0 4px 20px ${COLORS.accent}40`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center'
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 99
       }}>+</button>
 
-      {/* MODAL TAMBAH TRANSAKSI */}
+      {/* MODAL */}
       {showModal && (
         <div style={{
           position: 'fixed', inset: 0, background: '#0a0a0f80',
@@ -467,11 +478,11 @@ export default function DashboardPage() {
         }} onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div style={{
             background: COLORS.surface, borderRadius: '20px 20px 0 0',
-            padding: '24px', width: '100%', maxWidth: '500px',
+            padding: '20px 16px', width: '100%', maxWidth: '500px',
             border: `1px solid ${COLORS.border2}`, borderBottom: 'none',
-            maxHeight: '90vh', overflowY: 'auto'
+            maxHeight: '92vh', overflowY: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '16px', fontWeight: '700' }}>Tambah Transaksi</div>
               <button onClick={() => setShowModal(false)} style={{
                 background: COLORS.surface2, border: 'none', color: COLORS.text2,
@@ -479,17 +490,16 @@ export default function DashboardPage() {
               }}>×</button>
             </div>
 
-            {/* TYPE SELECTOR */}
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '14px' }}>
               <div style={labelStyle}>Tipe</div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '6px' }}>
                 {(['INCOME', 'EXPENSE', 'INVESTMENT'] as const).map(t => (
                   <button key={t} onClick={() => setForm(f => ({
                     ...f, type: t,
                     main_category: TYPE_CATEGORIES[t][0],
                     sub_category: ''
                   }))} style={{
-                    flex: 1, padding: '8px', borderRadius: '8px', fontSize: '12px',
+                    flex: 1, padding: '8px 4px', borderRadius: '8px', fontSize: '11px',
                     fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', border: 'none',
                     background: form.type === t ? typeColor[t] : COLORS.surface2,
                     color: form.type === t ? '#0a0a0f' : COLORS.text2,
@@ -498,23 +508,20 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* DATE */}
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '14px' }}>
               <div style={labelStyle}>Tanggal</div>
               <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} style={inputStyle} />
             </div>
 
-            {/* CATEGORY */}
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '14px' }}>
               <div style={labelStyle}>Kategori</div>
               <select value={form.main_category} onChange={e => setForm(f => ({ ...f, main_category: e.target.value, sub_category: '' }))} style={inputStyle}>
                 {TYPE_CATEGORIES[form.type].map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
-            {/* SUBCATEGORY */}
             {DEFAULT_CATEGORIES[form.main_category] && (
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '14px' }}>
                 <div style={labelStyle}>Sub Kategori</div>
                 <select value={form.sub_category} onChange={e => setForm(f => ({ ...f, sub_category: e.target.value }))} style={inputStyle}>
                   <option value="">— Pilih sub kategori —</option>
@@ -523,11 +530,11 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* AMOUNT */}
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '14px' }}>
               <div style={labelStyle}>Jumlah (Rp)</div>
               <input
                 type="text"
+                inputMode="numeric"
                 placeholder="0"
                 value={form.amount}
                 onChange={e => {
@@ -538,7 +545,6 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* NOTES */}
             <div style={{ marginBottom: '20px' }}>
               <div style={labelStyle}>Catatan (opsional)</div>
               <input type="text" placeholder="Tambah catatan..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} style={inputStyle} />
