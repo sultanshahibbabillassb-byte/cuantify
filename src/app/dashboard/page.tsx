@@ -232,7 +232,7 @@ export default function DashboardPage() {
   const inputStyle = {
     padding: '10px 12px', borderRadius: '8px',
     border: `1px solid ${COLORS.border2}`, background: COLORS.bg,
-    fontSize: '14px', outline: 'none', fontFamily: 'Plus Jakarta Sans, sans-serif',
+    fontSize: '16px', outline: 'none', fontFamily: 'Plus Jakarta Sans, sans-serif',
     color: COLORS.text, width: '100%', boxSizing: 'border-box' as const
   }
   const labelStyle = { fontSize: '12px', color: COLORS.text2, marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }
