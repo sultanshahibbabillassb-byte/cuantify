@@ -167,6 +167,17 @@ export default function DashboardPage() {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { window.location.href = '/'; return }
       setUser(data.user)
+      // Cek apakah user baru (created dalam 1 menit terakhir)
+      const createdAt = new Date(data.user.created_at)
+      const now = new Date()
+      const diffMinutes = (now.getTime() - createdAt.getTime()) / 60000
+      if (diffMinutes < 2) {
+        fetch("/api/notify-admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.user.email, name: data.user.user_metadata?.full_name })
+        })
+      }
     })
   }, [])
 
