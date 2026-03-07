@@ -46,8 +46,8 @@ function getPeriod(payDay: number, offset = 0) {
   return { start, end }
 }
 
-function formatDate(d: Date) {
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+function formatDateShort(d: Date) {
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
 }
 
 function formatDateInput(d: Date) {
@@ -68,12 +68,8 @@ function BarChart({ data }: { data: { label: string; value: number; color: strin
             borderRadius: '4px 4px 0 0', position: 'relative',
             height: `${Math.max((d.value / max) * 80, d.value > 0 ? 4 : 0)}px`,
             border: `1px solid ${d.color}40`, borderBottom: 'none',
-            transition: 'height 0.3s ease'
           }}>
-            <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0,
-              height: '3px', background: d.color, borderRadius: '2px 2px 0 0'
-            }} />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: d.color, borderRadius: '2px 2px 0 0' }} />
           </div>
           <div style={{ fontSize: '9px', color: COLORS.text3, textAlign: 'center', fontFamily: 'JetBrains Mono', lineHeight: 1.2 }}>
             {d.label.length > 8 ? d.label.slice(0, 7) + '…' : d.label}
@@ -130,9 +126,7 @@ function DonutChart({ income, expense, invest }: { income: number; expense: numb
             <div style={{ width: '7px', height: '7px', borderRadius: '2px', background: s.color, flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: '9px', color: COLORS.text3, fontFamily: 'JetBrains Mono' }}>{s.label}</div>
-              <div style={{ fontSize: '11px', color: COLORS.text, fontWeight: '600', fontFamily: 'Space Grotesk' }}>
-                {formatRp(s.value)}
-              </div>
+              <div style={{ fontSize: '11px', color: COLORS.text, fontWeight: '600', fontFamily: 'Space Grotesk' }}>{formatRp(s.value)}</div>
             </div>
           </div>
         ))}
@@ -230,9 +224,7 @@ export default function DashboardPage() {
   transactions.filter(t => t.type === 'EXPENSE').forEach(t => {
     expenseByCategory[t.main_category] = (expenseByCategory[t.main_category] || 0) + t.amount
   })
-  const barData = Object.entries(expenseByCategory).map(([label, value]) => ({
-    label, value, color: COLORS.expense
-  }))
+  const barData = Object.entries(expenseByCategory).map(([label, value]) => ({ label, value, color: COLORS.expense }))
 
   const typeColor = { INCOME: COLORS.income, EXPENSE: COLORS.expense, INVESTMENT: COLORS.invest }
   const typeLabel = { INCOME: 'Income', EXPENSE: 'Expense', INVESTMENT: 'Invest' }
@@ -244,8 +236,6 @@ export default function DashboardPage() {
     color: COLORS.text, width: '100%', boxSizing: 'border-box' as const
   }
   const labelStyle = { fontSize: '12px', color: COLORS.text2, marginBottom: '4px', fontFamily: 'JetBrains Mono, monospace' }
-
-  const periodLabel = `${formatDate(period.start)} — ${formatDate(period.end)}`
 
   return (
     <div style={{ minHeight: '100vh', background: COLORS.bg, color: COLORS.text, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
@@ -262,11 +252,8 @@ export default function DashboardPage() {
         <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '18px', fontWeight: '700', flexShrink: 0 }}>
           Cuan<span style={{ color: COLORS.accent }}>tify</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-          <div style={{
-            fontSize: '11px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal', maxWidth: '120px'
-          }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ fontSize: '11px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {user?.email?.split('@')[0]}
           </div>
           <button onClick={handleLogout} style={{
@@ -277,53 +264,54 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* NAV + PERIOD BAR */}
+      {/* NAV + PERIOD BAR — semua dalam 1 baris compact */}
       <div style={{
-        padding: '10px 16px', borderBottom: `1px solid ${COLORS.border}`,
-        display: 'flex', flexDirection: 'column', gap: '10px'
+        padding: '8px 16px',
+        borderBottom: `1px solid ${COLORS.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px'
       }}>
-        {/* Tab + Period dalam 1 baris */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-          <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-            {(['dashboard', 'transaksi'] as const).map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)} style={{
-                padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
-                cursor: 'pointer', fontFamily: 'inherit', border: 'none',
-                background: activeTab === tab ? COLORS.accent : COLORS.surface2,
-                color: activeTab === tab ? '#0a0a0f' : COLORS.text2,
-              }}>{tab.charAt(0).toUpperCase() + tab.slice(1)}</button>
-            ))}
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+          {(['dashboard', 'transaksi'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{
+              padding: '5px 10px', borderRadius: '7px', fontSize: '12px', fontWeight: '600',
+              cursor: 'pointer', fontFamily: 'inherit', border: 'none',
+              background: activeTab === tab ? COLORS.accent : COLORS.surface2,
+              color: activeTab === tab ? '#0a0a0f' : COLORS.text2,
+            }}>{tab.charAt(0).toUpperCase() + tab.slice(1)}</button>
+          ))}
+        </div>
+
+        {/* Period navigator — compact */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+          <button onClick={() => setPeriodOffset(p => p - 1)} style={{
+            background: COLORS.surface2, border: `1px solid ${COLORS.border2}`,
+            color: COLORS.text, width: '24px', height: '24px', borderRadius: '5px',
+            cursor: 'pointer', fontSize: '13px', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
+          }}>‹</button>
+          <div style={{
+            fontSize: '10px', color: COLORS.text2, fontFamily: 'JetBrains Mono, monospace',
+            textAlign: 'center', whiteSpace: 'nowrap'
+          }}>
+            {formatDateShort(period.start)} — {formatDateShort(period.end)}
           </div>
-          {/* Period navigator */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button onClick={() => setPeriodOffset(p => p - 1)} style={{
-              background: COLORS.surface2, border: `1px solid ${COLORS.border2}`,
-              color: COLORS.text, width: '26px', height: '26px', borderRadius: '6px',
-              cursor: 'pointer', fontSize: '14px', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>‹</button>
-            <div style={{
-              fontSize: '11px', color: COLORS.text2, fontFamily: 'JetBrains Mono, monospace',
-              textAlign: 'center', whiteSpace: 'normal'
-            }}>
-              {periodLabel}
-            </div>
-            <button onClick={() => setPeriodOffset(p => p + 1)} disabled={periodOffset >= 0} style={{
-              background: COLORS.surface2, border: `1px solid ${COLORS.border2}`,
-              color: periodOffset >= 0 ? COLORS.text3 : COLORS.text,
-              width: '26px', height: '26px', borderRadius: '6px',
-              cursor: periodOffset >= 0 ? 'not-allowed' : 'pointer', fontSize: '14px', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>›</button>
-          </div>
+          <button onClick={() => setPeriodOffset(p => p + 1)} disabled={periodOffset >= 0} style={{
+            background: COLORS.surface2, border: `1px solid ${COLORS.border2}`,
+            color: periodOffset >= 0 ? COLORS.text3 : COLORS.text,
+            width: '24px', height: '24px', borderRadius: '5px',
+            cursor: periodOffset >= 0 ? 'not-allowed' : 'pointer', fontSize: '13px', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0
+          }}>›</button>
         </div>
       </div>
 
-      <div style={{ padding: '12px 16px', maxWidth: '900px', margin: '0 auto', paddingBottom: '80px' }}>
+      {/* CONTENT */}
+      <div style={{ padding: '12px 16px', maxWidth: '900px', margin: '0 auto', paddingBottom: '90px' }}>
 
         {activeTab === 'dashboard' && (
           <div>
-            {/* SUMMARY CARDS — 2 kolom di mobile */}
+            {/* SUMMARY CARDS — 2 kolom */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '12px' }}>
               {[
                 { label: 'INCOME', value: income, color: COLORS.income, sub: `${transactions.filter(t => t.type === 'INCOME').length} transaksi` },
@@ -338,9 +326,7 @@ export default function DashboardPage() {
                   borderTop: `2px solid ${card.color}40`,
                   gridColumn: i === 4 ? 'span 2' : 'span 1'
                 }}>
-                  <div style={{ fontSize: '8px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '6px', letterSpacing: '1px' }}>
-                    {card.label}
-                  </div>
+                  <div style={{ fontSize: '8px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '6px', letterSpacing: '1px' }}>{card.label}</div>
                   <div style={{ fontSize: '16px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: card.color, marginBottom: '2px' }}>
                     {card.rate !== undefined ? `${card.rate.toFixed(1)}%` : formatRp(card.value!)}
                   </div>
@@ -349,14 +335,12 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {/* CHARTS — stack vertikal di mobile */}
+            {/* CHARTS */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
               <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '14px' }}>
                 <div style={{ fontSize: '9px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', marginBottom: '8px', letterSpacing: '1px' }}>EXPENSE PER KATEGORI</div>
                 {barData.length > 0 ? <BarChart data={barData} /> : (
-                  <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.text3, fontSize: '13px' }}>
-                    Belum ada expense
-                  </div>
+                  <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.text3, fontSize: '13px' }}>Belum ada expense</div>
                 )}
               </div>
               <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '14px' }}>
@@ -369,26 +353,15 @@ export default function DashboardPage() {
             <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <div style={{ fontSize: '9px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '1px' }}>TRANSAKSI TERBARU</div>
-                <button onClick={() => setActiveTab('transaksi')} style={{
-                  background: 'transparent', border: 'none', color: COLORS.accent,
-                  fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit'
-                }}>Lihat semua →</button>
+                <button onClick={() => setActiveTab('transaksi')} style={{ background: 'transparent', border: 'none', color: COLORS.accent, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>Lihat semua →</button>
               </div>
               {transactions.slice(0, 5).map(tx => (
-                <div key={tx.id} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '10px 0', borderBottom: `1px solid ${COLORS.border}`
-                }}>
+                <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${COLORS.border}` }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                    <div style={{
-                      width: '7px', height: '7px', borderRadius: '50%',
-                      background: typeColor[tx.type], flexShrink: 0
-                    }} />
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: typeColor[tx.type], flexShrink: 0 }} />
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '13px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }}>{tx.main_category}</div>
-                      <div style={{ fontSize: '10px', color: COLORS.text3 }}>
-                        {tx.sub_category && `${tx.sub_category} · `}{tx.date}
-                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.main_category}</div>
+                      <div style={{ fontSize: '10px', color: COLORS.text3 }}>{tx.sub_category && `${tx.sub_category} · `}{tx.date}</div>
                     </div>
                   </div>
                   <div style={{ fontSize: '13px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: typeColor[tx.type], flexShrink: 0, marginLeft: '8px' }}>
@@ -409,41 +382,22 @@ export default function DashboardPage() {
         {activeTab === 'transaksi' && (
           <div>
             {transactions.map(tx => (
-              <div key={tx.id} style={{
-                background: COLORS.surface, border: `1px solid ${COLORS.border}`,
-                borderRadius: '10px', padding: '12px', marginBottom: '8px',
-                borderLeft: `3px solid ${typeColor[tx.type]}`
-              }}>
+              <div key={tx.id} style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '10px', padding: '12px', marginBottom: '8px', borderLeft: `3px solid ${typeColor[tx.type]}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                      <span style={{
-                        fontSize: '9px', fontFamily: 'JetBrains Mono, monospace',
-                        background: typeColor[tx.type] + '22', color: typeColor[tx.type],
-                        padding: '2px 6px', borderRadius: '4px', border: `1px solid ${typeColor[tx.type]}40`,
-                        flexShrink: 0
-                      }}>{typeLabel[tx.type]}</span>
+                      <span style={{ fontSize: '9px', fontFamily: 'JetBrains Mono, monospace', background: typeColor[tx.type] + '22', color: typeColor[tx.type], padding: '2px 6px', borderRadius: '4px', border: `1px solid ${typeColor[tx.type]}40`, flexShrink: 0 }}>{typeLabel[tx.type]}</span>
                       <span style={{ fontSize: '13px', fontWeight: '600' }}>{tx.main_category}</span>
                     </div>
                     {tx.sub_category && <div style={{ fontSize: '11px', color: COLORS.text3, marginBottom: '2px' }}>📂 {tx.sub_category}</div>}
-                    {tx.notes && (
-                      <div style={{
-                        fontSize: '11px', color: COLORS.text2, background: COLORS.surface2,
-                        padding: '4px 8px', borderRadius: '6px', marginBottom: '4px',
-                        borderLeft: `2px solid ${COLORS.border2}`
-                      }}>📝 {tx.notes}</div>
-                    )}
+                    {tx.notes && <div style={{ fontSize: '11px', color: COLORS.text2, background: COLORS.surface2, padding: '4px 8px', borderRadius: '6px', marginBottom: '4px', borderLeft: `2px solid ${COLORS.border2}` }}>📝 {tx.notes}</div>}
                     <div style={{ fontSize: '10px', color: COLORS.text3 }}>📅 {tx.date}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', marginLeft: '8px', flexShrink: 0 }}>
                     <div style={{ fontSize: '14px', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', color: typeColor[tx.type] }}>
                       {tx.type === 'INCOME' ? '+' : '-'}{formatRp(tx.amount)}
                     </div>
-                    <button onClick={() => handleDelete(tx.id)} style={{
-                      background: 'transparent', border: `1px solid ${COLORS.border2}`,
-                      color: COLORS.text3, padding: '3px 8px', borderRadius: '5px',
-                      fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit'
-                    }}>Hapus</button>
+                    <button onClick={() => handleDelete(tx.id)} style={{ background: 'transparent', border: `1px solid ${COLORS.border2}`, color: COLORS.text3, padding: '3px 8px', borderRadius: '5px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit' }}>Hapus</button>
                   </div>
                 </div>
               </div>
@@ -458,9 +412,9 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* FAB */}
+      {/* FAB — posisi lebih tinggi agar tidak ketindih browser bar */}
       <button onClick={() => setShowModal(true)} style={{
-        position: 'fixed', bottom: '20px', right: '20px',
+        position: 'fixed', bottom: '24px', right: '20px',
         width: '52px', height: '52px', borderRadius: '50%',
         background: COLORS.accent, border: 'none',
         fontSize: '24px', cursor: 'pointer',
@@ -471,36 +425,20 @@ export default function DashboardPage() {
 
       {/* MODAL */}
       {showModal && (
-        <div style={{
-          position: 'fixed', inset: 0, background: '#0a0a0f80',
-          backdropFilter: 'blur(4px)', zIndex: 200,
-          display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
-        }} onClick={e => e.target === e.currentTarget && setShowModal(false)}>
-          <div style={{
-            background: COLORS.surface, borderRadius: '20px 20px 0 0',
-            padding: '20px 16px', width: '100%', maxWidth: '500px',
-            border: `1px solid ${COLORS.border2}`, borderBottom: 'none',
-            maxHeight: '92vh', overflowY: 'auto'
-          }}>
+        <div style={{ position: 'fixed', inset: 0, background: '#0a0a0f80', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+          <div style={{ background: COLORS.surface, borderRadius: '20px 20px 0 0', padding: '20px 16px 32px', width: '100%', maxWidth: '500px', border: `1px solid ${COLORS.border2}`, borderBottom: 'none', maxHeight: '92vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '16px', fontWeight: '700' }}>Tambah Transaksi</div>
-              <button onClick={() => setShowModal(false)} style={{
-                background: COLORS.surface2, border: 'none', color: COLORS.text2,
-                width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', fontSize: '16px'
-              }}>×</button>
+              <button onClick={() => setShowModal(false)} style={{ background: COLORS.surface2, border: 'none', color: COLORS.text2, width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', fontSize: '16px' }}>×</button>
             </div>
 
             <div style={{ marginBottom: '14px' }}>
               <div style={labelStyle}>Tipe</div>
               <div style={{ display: 'flex', gap: '6px' }}>
                 {(['INCOME', 'EXPENSE', 'INVESTMENT'] as const).map(t => (
-                  <button key={t} onClick={() => setForm(f => ({
-                    ...f, type: t,
-                    main_category: TYPE_CATEGORIES[t][0],
-                    sub_category: ''
-                  }))} style={{
-                    flex: 1, padding: '8px 4px', borderRadius: '8px', fontSize: '11px',
-                    fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', border: 'none',
+                  <button key={t} onClick={() => setForm(f => ({ ...f, type: t, main_category: TYPE_CATEGORIES[t][0], sub_category: '' }))} style={{
+                    flex: 1, padding: '8px 4px', borderRadius: '8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', border: 'none',
                     background: form.type === t ? typeColor[t] : COLORS.surface2,
                     color: form.type === t ? '#0a0a0f' : COLORS.text2,
                   }}>{typeLabel[t]}</button>
@@ -532,17 +470,9 @@ export default function DashboardPage() {
 
             <div style={{ marginBottom: '14px' }}>
               <div style={labelStyle}>Jumlah (Rp)</div>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="0"
-                value={form.amount}
-                onChange={e => {
-                  const raw = e.target.value.replace(/\D/g, '')
-                  setForm(f => ({ ...f, amount: raw ? parseInt(raw).toLocaleString('id-ID') : '' }))
-                }}
-                style={inputStyle}
-              />
+              <input type="text" inputMode="numeric" placeholder="0" value={form.amount}
+                onChange={e => { const raw = e.target.value.replace(/\D/g, ''); setForm(f => ({ ...f, amount: raw ? parseInt(raw).toLocaleString('id-ID') : '' })) }}
+                style={inputStyle} />
             </div>
 
             <div style={{ marginBottom: '20px' }}>
@@ -550,12 +480,9 @@ export default function DashboardPage() {
               <input type="text" placeholder="Tambah catatan..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} style={inputStyle} />
             </div>
 
-            <button onClick={handleAddTransaction} style={{
-              width: '100%', padding: '13px', borderRadius: '10px',
-              border: 'none', background: COLORS.accent, color: '#0a0a0f',
-              fontSize: '14px', fontWeight: '700', cursor: 'pointer',
-              fontFamily: 'Space Grotesk, sans-serif'
-            }}>Simpan Transaksi</button>
+            <button onClick={handleAddTransaction} style={{ width: '100%', padding: '13px', borderRadius: '10px', border: 'none', background: COLORS.accent, color: '#0a0a0f', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif' }}>
+              Simpan Transaksi
+            </button>
           </div>
         </div>
       )}
