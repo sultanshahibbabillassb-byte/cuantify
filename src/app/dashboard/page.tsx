@@ -265,7 +265,7 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
           <div style={{
             fontSize: '11px', color: COLORS.text3, fontFamily: 'JetBrains Mono, monospace',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px'
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal', maxWidth: '120px'
           }}>
             {user?.email?.split('@')[0]}
           </div>
@@ -304,7 +304,7 @@ export default function DashboardPage() {
             }}>‹</button>
             <div style={{
               fontSize: '11px', color: COLORS.text2, fontFamily: 'JetBrains Mono, monospace',
-              textAlign: 'center', whiteSpace: 'nowrap'
+              textAlign: 'center', whiteSpace: 'normal'
             }}>
               {periodLabel}
             </div>
@@ -385,7 +385,7 @@ export default function DashboardPage() {
                       background: typeColor[tx.type], flexShrink: 0
                     }} />
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '13px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.main_category}</div>
+                      <div style={{ fontSize: '13px', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'normal' }}>{tx.main_category}</div>
                       <div style={{ fontSize: '10px', color: COLORS.text3 }}>
                         {tx.sub_category && `${tx.sub_category} · `}{tx.date}
                       </div>
